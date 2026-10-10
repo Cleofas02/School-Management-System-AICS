@@ -1,0 +1,22 @@
+﻿services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: sms_user
+      POSTGRES_PASSWORD: sms_pass
+      POSTGRES_DB: sms_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@sms.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+
+volumes:
+  pgdata:

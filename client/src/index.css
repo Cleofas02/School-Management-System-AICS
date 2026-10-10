@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* Light / dark switch: add the "dark" class to <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --canvas: #f0f4fb;
+  --surface: #ffffff;
+  --surface2: #f3f6fc;
+  --ink: #0b1a3a;
+  --muted: #5a6b8e;
+  --line: #dce4f2;
+}
+.dark {
+  --canvas: #050c1e;
+  --surface: #0b1733;
+  --surface2: #12224a;
+  --ink: #eaf0fb;
+  --muted: #94a5c9;
+  --line: #1e3265;
+}
+
+/* Names we can use as Tailwind colors: bg-canvas, bg-surface, text-ink, text-muted, border-line ... */
+@theme inline {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+
+  /* AICS school colors, taken from the seal and banner: navy / blue / gold */
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #d9e6fc;
+  --color-brand-200: #b7cff8;
+  --color-brand-300: #8db4f1;
+  --color-brand-400: #5c91e6;
+  --color-brand-500: #2f6fd1;
+  --color-brand-600: #1f57b3;
+  --color-brand-700: #17428c;
+  --color-brand-800: #0f2e68;
+  --color-brand-900: #0a2050;
+  --color-gold-300: #fcd272;
+  --color-gold-400: #fbbf3c;
+  --color-gold-500: #f5a623;
+  --color-gold-600: #d98a0b;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- animations ---------- */
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+@keyframes slide-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+@keyframes check-draw { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+
+.anim-fade-up { animation: fade-up 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.anim-pop { animation: pop 0.25s ease both; }
+.anim-slide { animation: slide-in 0.35s ease both; }
+.anim-float { animation: float 7s ease-in-out infinite; }
+.anim-check { stroke-dasharray: 40; animation: check-draw 0.6s 0.2s ease both; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--line) 37%, var(--surface2) 63%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* slim scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

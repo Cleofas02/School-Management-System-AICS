@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Campus SMS - System Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#f2f4fb; --surface:#fff; --surface2:#f6f7fc; --ink:#0f172a; --muted:#64748b; --line:#e4e8f3; --brand:#6366f1; --brand2:#8b5cf6; }
+  :root.dark { --bg:#0a0f1f; --surface:#121a31; --surface2:#182142; --ink:#e9edf9; --muted:#94a0bf; --line:#232e52; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; scroll-padding-top:80px; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:'Plus Jakarta Sans',system-ui,sans-serif; line-height:1.65; -webkit-font-smoothing:antialiased; }
+  header.top { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:16px; padding:12px 24px; background:color-mix(in srgb,var(--surface) 85%,transparent); backdrop-filter:blur(14px); border-bottom:1px solid var(--line); }
+  header.top .logo { font-weight:800; display:flex; align-items:center; gap:10px; }
+  header.top .logo span { display:grid; place-items:center; width:34px; height:34px; border-radius:11px; color:#fff; background:linear-gradient(135deg,var(--brand),var(--brand2)); font-size:17px; }
+  nav { display:flex; gap:4px; overflow-x:auto; flex:1; }
+  nav a { padding:6px 12px; border-radius:10px; font-size:14px; font-weight:600; color:var(--muted); text-decoration:none; white-space:nowrap; }
+  nav a:hover { background:var(--surface2); color:var(--ink); }
+  button.theme { border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:10px; padding:7px 12px; font:600 13px inherit; cursor:pointer; }
+  .hero { margin:28px auto 0; max-width:1100px; padding:0 24px; }
+  .hero .card { border-radius:28px; padding:40px; color:#fff; background:linear-gradient(135deg,#4f46e5,#7c3aed 55%,#c026d3); box-shadow:0 20px 50px -20px rgba(99,102,241,.6); }
+  .hero h1 { margin:0 0 8px; font-size:clamp(28px,5vw,42px); font-weight:800; letter-spacing:-.02em; }
+  .hero p { margin:0; max-width:620px; opacity:.85; }
+  main { max-width:1100px; margin:0 auto; padding:24px; }
+  section { margin-top:40px; }
+  h2 { font-size:26px; font-weight:800; letter-spacing:-.01em; margin:0 0 6px; }
+  h2 small { display:block; font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--brand); margin-bottom:4px; }
+  h3 { font-size:18px; margin:28px 0 8px; }
+  p.lead { color:var(--muted); margin:0 0 18px; max-width:760px; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:22px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:700; background:color-mix(in srgb,var(--brand) 14%,transparent); color:var(--brand); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  td.c, th.c { text-align:center; }
+  .scroll { overflow-x:auto; }
+  code, pre { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:13px; }
+  code { background:var(--surface2); padding:2px 6px; border-radius:6px; }
+  pre.code { background:var(--surface2); border:1px solid var(--line); border-radius:14px; padding:16px; overflow-x:auto; margin:0; }
+  .diagram { background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:20px; overflow-x:auto; text-align:center; }
+  .diagram svg { max-width:100%; height:auto; }
+  .diagram pre.src { text-align:left; margin:0; color:var(--muted); font-size:12px; }
+  .note { margin-top:10px; font-size:13px; color:var(--muted); }
+  .ok { color:#10b981; font-weight:800; }
+  footer { text-align:center; color:var(--muted); font-size:13px; padding:40px 0 60px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="logo"><span>🎓</span> Campus SMS</div>
+  <nav>
+    <a href="#overview">Overview</a><a href="#architecture">Architecture</a><a href="#database">Database</a>
+    <a href="#flows">Flowcharts</a><a href="#roles">Roles</a><a href="#api">API</a><a href="#run">Run it</a>
+  </nav>
+  <button class="theme" id="themeBtn">🌙 Dark</button>
+</header>
+
+<div class="hero"><div class="card">
+  <h1>System Documentation</h1>
+  <p>School Management System for Computer Science, Computer Engineering and Entrepreneurship: enrollment, grades, appointment tickets and tuition, with an Admin who oversees everything.</p>
+</div></div>
+
+<main>
+
+<section id="overview">
+  <h2><small>1. Overview</small>What the system does</h2>
+  <p class="lead">Students sign up and wait for Admin approval. After that they enroll in classes, see their grades, and book appointment tickets for the registrar or accounting. Each person only sees the tools for their role.</p>
+  <div class="grid">
+    <div class="card"><b>👑 Admin</b><p class="note">Approves or denies accounts, enrollments and tickets. Can edit or delete almost anything.</p></div>
+    <div class="card"><b>📋 Registrar</b><p class="note">Manages courses, class sections and enrollment requests. Handles registration and inquiry tickets.</p></div>
+    <div class="card"><b>💰 Accounting</b><p class="note">Verifies reference numbers, receives cash and updates tuition ledgers.</p></div>
+    <div class="card"><b>🧑‍🏫 Faculty</b><p class="note">Sees own classes and rosters, and enters grades.</p></div>
+    <div class="card"><b>🎓 Student</b><p class="note">Requests classes, views grades and balance, books appointments.</p></div>
+  </div>
+
+  <h3>Tech stack</h3>
+  <div class="card scroll"><table>
+    <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+    <tr><td>Frontend</td><td>React + Vite, Tailwind CSS v4, React Router, lucide-react icons</td><td>Fast to build, modern look, light and dark mode</td></tr>
+    <tr><td>Backend</td><td>Node.js + Express (one API)</td><td>Simple. One server instead of three separate ones</td></tr>
+    <tr><td>Database</td><td>PostgreSQL 16 in Docker (+ pgAdmin)</td><td>Reliable relational data, easy to run anywhere</td></tr>
+    <tr><td>Security</td><td>bcrypt password hashes, JWT tokens (8 hours), role checks on every route</td><td>Standard, easy to understand</td></tr>
+  </table></div>
+</section>
+
+<section id="architecture">
+  <h2><small>2. System architecture</small>How the pieces connect</h2>
+  <p class="lead">The browser talks to one Express API. The API checks the login token and the role, then reads or writes PostgreSQL. In development the Vite server forwards <code>/api</code> requests to the API on port 5000.</p>
+  <div class="diagram"><pre class="src">flowchart LR
+  U(["Users: Admin, Registrar, Accounting, Faculty, Student"]) --> P
+  subgraph BROWSER["Browser: React app (Vite + Tailwind)"]
+    P["Pages and components"]
+    A["AuthContext + api.js (adds the JWT token)"]
+    P --> A
+  end
+  A -->|"HTTP /api (Vite proxy)"| M
+  subgraph SERVER["Express API on port 5000"]
+    M["Middleware: requireAuth and requireAccess"]
+    R["Routes: auth, admin, courses, sections, enrollments, teaching, tickets, ledgers, stats"]
+    M --> R
+  end
+  R -->|"SQL via pg"| DB
+  subgraph DOCKER["Docker"]
+    DB[("PostgreSQL 16")]
+    PGA["pgAdmin on port 5050"]
+  end
+  PGA -.-> DB</pre></div>
+</section>
+
+<section id="database">
+  <h2><small>3. Database schema</small>Tables and relationships</h2>
+  <p class="lead">Nine tables. Every person is a row in <code>users</code>. A profile table adds the details for their role. The <code>status</code> columns (pending, approved, denied) power the Admin's approve and deny buttons.</p>
+  <div class="diagram"><pre class="src">erDiagram
+  USERS ||--o| STUDENT_PROFILES : "is a"
+  USERS ||--o| STAFF_PROFILES : "is a"
+  USERS ||--o| FACULTY_PROFILES : "is a"
+  COURSES ||--o{ CLASS_SECTIONS : "has"
+  FACULTY_PROFILES |o--o{ CLASS_SECTIONS : "teaches"
+  STUDENT_PROFILES ||--o{ ENROLLMENTS : "requests"
+  CLASS_SECTIONS ||--o{ ENROLLMENTS : "has"
+  STUDENT_PROFILES ||--o{ PAYMENT_TICKETS : "books"
+  STUDENT_PROFILES ||--o| TUITION_LEDGERS : "owes"
+
+  USERS {
+    int id PK
+    string email UK
+    string password_hash
+    string first_name
+    string last_name
+    string role "admin, staff, faculty, student"
+    string status "pending, approved, denied"
+    boolean is_active
+    timestamp created_at
+  }
+  STUDENT_PROFILES {
+    int user_id PK, FK
+    string student_number UK
+    string program
+    int year_level
+    string academic_status
+  }
+  STAFF_PROFILES {
+    int user_id PK, FK
+    string employee_id UK
+    string department_type "registrar, accounting"
+  }
+  FACULTY_PROFILES {
+    int user_id PK, FK
+    string faculty_id UK
+    string department
+    string title
+  }
+  COURSES {
+    int course_id PK
+    string course_code UK
+    string title
+    int units
+    string program "Computer Science, Computer Engineering, Entrepreneurship"
+  }
+  CLASS_SECTIONS {
+    int section_id PK
+    int course_id FK
+    int faculty_user_id FK
+    string room_number
+    string days_of_week
+    time start_time
+    time end_time
+    int max_capacity
+  }
+  ENROLLMENTS {
+    int enrollment_id PK
+    int student_id FK
+    int section_id FK
+    string status "pending, approved, denied, dropped"
+    string grade
+  }
+  PAYMENT_TICKETS {
+    int ticket_id PK
+    int student_id FK
+    string reference_no UK
+    string purpose "accounting, registration, inquiry"
+    date appointment_date
+    string time_slot
+    decimal amount_due
+    string status "pending, ready, completed, denied"
+  }
+  TUITION_LEDGERS {
+    int ledger_id PK
+    int student_id FK
+    decimal total_amount
+    decimal amount_paid
+    string payment_status "unpaid, partial, paid"
+  }</pre></div>
+  <p class="note">If the diagrams do not appear, check your internet connection. The diagram code is shown instead.</p>
+
+  <h3>What each table is for</h3>
+  <div class="card scroll"><table>
+    <tr><th>Table</th><th>Purpose</th></tr>
+    <tr><td><code>users</code></td><td>Login accounts for everyone. <code>status</code> controls approval, <code>is_active</code> lets the Admin deactivate an account.</td></tr>
+    <tr><td><code>student_profiles</code> / <code>staff_profiles</code> / <code>faculty_profiles</code></td><td>Extra details for each role. Deleting a user deletes the profile too (<code>ON DELETE CASCADE</code>).</td></tr>
+    <tr><td><code>courses</code></td><td>The catalog. Every course belongs to one of the three programs.</td></tr>
+    <tr><td><code>class_sections</code></td><td>A course offered with a teacher, room, schedule and seat limit. First-year courses have two sections.</td></tr>
+    <tr><td><code>enrollments</code></td><td>A student's request for a section. Unique per student and section. Holds the grade.</td></tr>
+    <tr><td><code>payment_tickets</code></td><td>Appointment bookings with a unique reference number, shown at the window.</td></tr>
+    <tr><td><code>tuition_ledgers</code></td><td>One running balance per student. Created when the student is approved.</td></tr>
+  </table></div>
+</section>
+
+<section id="flows">
+  <h2><small>4. Flowcharts</small>How the main processes work</h2>
+
+  <h3>Account approval and login</h3>
+  <div class="diagram"><pre class="src">flowchart TD
+  A(["Student registers"]) --> B["Account saved as pending"]
+  B --> C{"Admin reviews"}
+  C -->|"Approve"| D["Status approved and tuition ledger created"]
+  C -->|"Deny"| E["Status denied"]
+  D --> F["Student logs in and receives a token for 8 hours"]
+  E --> G["Login is blocked with a message"]
+  F --> H["Dashboard for their role"]</pre></div>
+
+  <h3>Enrollment, grading and dropping</h3>
+  <div class="diagram"><pre class="src">flowchart TD
+  A(["Student browses classes"]) --> B["Requests to enroll"]
+  B --> C{"Already requested or joined?"}
+  C -->|"Yes"| D["Blocked as a duplicate"]
+  C -->|"No"| E["Enrollment saved as pending"]
+  E --> F{"Registrar or Admin reviews"}
+  F -->|"Deny"| J["Status denied, student may request again"]
+  F -->|"Approve"| G{"Is the section full?"}
+  G -->|"Yes"| H["Stays pending with a section full message"]
+  G -->|"No"| I["Status approved, student appears on the roster"]
+  I --> K["Faculty enters a grade"]
+  K --> L["Student sees the grade in My Grades"]
+  I --> M["Student may drop before a grade is given"]</pre></div>
+
+  <h3>Appointment ticket and payment at the window</h3>
+  <div class="diagram"><pre class="src">sequenceDiagram
+  actor S as Student
+  participant W as Web app
+  participant API as Express API
+  participant DB as PostgreSQL
+  actor T as Staff or Admin
+  S->>W: Choose purpose, day and time
+  W->>API: POST /api/tickets
+  API->>DB: Save ticket as pending with a new reference number
+  API-->>W: Reference number
+  W-->>S: Ticket card with reference number
+  T->>API: Approve the ticket
+  API->>DB: Status becomes ready
+  S->>T: Shows the reference number at the window
+  T->>API: Look up the reference number
+  API-->>T: Ticket details and tuition balance
+  T->>API: Complete transaction with cash received
+  API->>DB: Ticket completed and ledger amount paid updated</pre></div>
+
+  <h3>Ticket status lifecycle</h3>
+  <div class="diagram"><pre class="src">stateDiagram-v2
+  [*] --> pending: Student books
+  pending --> ready: Staff or Admin approves
+  pending --> denied: Staff or Admin denies
+  ready --> completed: Verified at the window
+  ready --> denied: Denied
+  denied --> ready: Approved again
+  completed --> [*]</pre></div>
+</section>
+
+<section id="roles">
+  <h2><small>5. Roles and permissions</small>Who can do what</h2>
+  <p class="lead">Every API route checks the role in the login token, so a hidden button is never the only protection.</p>
+  <div class="card scroll"><table>
+    <tr><th>Action</th><th class="c">Admin</th><th class="c">Registrar</th><th class="c">Accounting</th><th class="c">Faculty</th><th class="c">Student</th></tr>
+    <tr><td>Approve, deny, create, edit, delete users</td><td class="c ok">✔</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td></tr>
+    <tr><td>Manage courses and sections</td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c">-</td><td class="c">-</td><td class="c">-</td></tr>
+    <tr><td>Approve, deny, delete enrollments</td><td class="c ok">✔</td><td class="c ok">✔</td><td class="c">-</td><td class="c">-</td><td class="c">-</td></tr>
+    <tr><td>Request and drop classes</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c ok">✔</td></tr>
+    <tr><td>View rosters and enter grades</td><td class="c ok">✔ all</td><td class="c">-</td><td class="c">-</td><td class="c ok">✔ own</td><td class="c">-</td></tr>
+    <tr><td>Approve, deny and verify tickets</td><td class="c ok">✔ all</td><td class="c ok">✔ registration, inquiry</td><td class="c ok">✔ accounting</td><td class="c">-</td><td class="c">-</td></tr>
+    <tr><td>Edit or delete tickets</td><td class="c ok">✔</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td></tr>
+    <tr><td>Book tickets</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c ok">✔</td></tr>
+    <tr><td>Edit tuition ledgers</td><td class="c ok">✔</td><td class="c">-</td><td class="c ok">✔</td><td class="c">-</td><td class="c">-</td></tr>
+    <tr><td>See own grades, tickets and balance</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c">-</td><td class="c ok">✔</td></tr>
+  </table></div>
+</section>
+
+<section id="api">
+  <h2><small>6. API summary</small>Endpoints</h2>
+  <p class="lead">All routes start with <code>/api</code>. Everything except register and login needs a valid token.</p>
+  <div class="card scroll"><table>
+    <tr><th>Area</th><th>Endpoints</th><th>Who</th></tr>
+    <tr><td>Auth</td><td><code>POST /auth/register</code> <code>POST /auth/login</code> <code>GET /auth/me</code></td><td>Public / logged in</td></tr>
+    <tr><td>Users</td><td><code>GET POST /admin/users</code> <code>PATCH DELETE /admin/users/:id</code> <code>PATCH /admin/users/:id/status</code></td><td>Admin</td></tr>
+    <tr><td>Courses</td><td><code>GET /courses</code> <code>POST PATCH DELETE /courses</code></td><td>Read: all. Write: Registrar, Admin</td></tr>
+    <tr><td>Sections</td><td><code>GET /sections</code> <code>POST PATCH DELETE /sections</code></td><td>Read: all. Write: Registrar, Admin</td></tr>
+    <tr><td>Enrollments</td><td><code>GET POST /enrollments</code> <code>PATCH /enrollments/:id/status</code> <code>POST /enrollments/:id/drop</code> <code>DELETE</code></td><td>Student, Registrar, Admin</td></tr>
+    <tr><td>Teaching</td><td><code>GET /teaching/sections</code> <code>GET /teaching/sections/:id/roster</code> <code>PATCH /teaching/enrollments/:id/grade</code></td><td>Faculty, Admin</td></tr>
+    <tr><td>Tickets</td><td><code>GET POST /tickets</code> <code>GET /tickets/lookup/:ref</code> <code>PATCH /tickets/:id/status</code> <code>POST /tickets/:id/complete</code></td><td>Student, Staff, Admin</td></tr>
+    <tr><td>Ledgers</td><td><code>GET /ledgers</code> <code>PATCH /ledgers/:id</code></td><td>Student (own), Accounting, Admin</td></tr>
+    <tr><td>Dashboard</td><td><code>GET /stats</code></td><td>Everyone (different data per role)</td></tr>
+  </table></div>
+</section>
+
+<section id="run">
+  <h2><small>7. Run it</small>Setup and demo data</h2>
+
+  <h3>Project structure</h3>
+<pre class="code">School-management-system/
+├── docker-compose.yml        PostgreSQL + pgAdmin
+├── database/schema.sql       the 9 tables
+├── docs/system-documentation.html   this file
+├── server/                   Express API
+│   ├── index.js  db.js  utils.js  seed.js
+│   ├── middleware/authMiddleware.js
+│   └── routes/               auth, admin, course, section, enrollment,
+│                             teaching, ticket, ledger, stats
+└── client/src/               React app
+    ├── App.jsx  main.jsx  api.js  hooks.js  AuthContext.jsx  index.css
+    ├── components/           Shell, Page, Modal, Feedback, ui, charts, AuthLayout
+    └── pages/                Login, Register, Dashboard + admin/ registrar/
+                              faculty/ student/ staff/</pre>
+
+  <h3>Start everything</h3>
+<pre class="code"># 1. Open Docker Desktop, then in the project folder:
+docker compose up -d
+
+# 2. Create the tables and the demo data (this wipes old data)
+Get-Content database\schema.sql | docker compose exec -T db psql -U sms_user -d sms_db
+cd server
+node seed.js
+
+# 3. Start the API
+npm run dev
+
+# 4. In another terminal, start the website
+cd client
+npm install lucide-react
+npm run dev</pre>
+
+  <h3>Demo data</h3>
+  <p class="lead">About 50 students across the three programs, 9 faculty, 18 courses (6 per program), 24 class sections, 140+ enrollments with grades, 42 tuition ledgers and 50+ tickets in every status.</p>
+  <div class="card scroll"><table>
+    <tr><th>Email</th><th>Role</th><th>Try this</th></tr>
+    <tr><td><code>admin@sms.com</code></td><td>Admin</td><td>Approve the pending accounts on the Users page</td></tr>
+    <tr><td><code>registrar@sms.com</code></td><td>Registrar</td><td>Approve enrollment requests</td></tr>
+    <tr><td><code>accounting@sms.com</code></td><td>Accounting</td><td>Verify a reference number and record cash</td></tr>
+    <tr><td><code>faculty@sms.com</code></td><td>Faculty (Computer Science)</td><td>Open a roster and enter grades</td></tr>
+    <tr><td><code>student@sms.com</code></td><td>Student (Computer Science)</td><td>Request a class, book an appointment</td></tr>
+  </table></div>
+  <p class="note">Every account uses the password <code>password123</code>. This is for development only. Change it, and the <code>JWT_SECRET</code> in <code>server/.env</code>, before real use.</p>
+</section>
+
+</main>
+<footer>Campus SMS · School Management System documentation</footer>
+
+<script type="module">
+  const root = document.documentElement
+  const btn = document.getElementById('themeBtn')
+  const saved = localStorage.getItem('docs-theme')
+  if (saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches) root.classList.add('dark')
+  const label = () => (btn.textContent = root.classList.contains('dark') ? '☀️ Light' : '🌙 Dark')
+  label()
+
+  // Remember each diagram's source so we can redraw it when the theme changes
+  const holders = [...document.querySelectorAll('.diagram')]
+  const sources = holders.map((h) => h.querySelector('pre.src').textContent)
+  let mermaid = null
+
+  async function draw() {
+    if (!mermaid) return
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: root.classList.contains('dark') ? 'dark' : 'default',
+      securityLevel: 'loose',
+      fontFamily: 'Plus Jakarta Sans, sans-serif',
+    })
+    for (let i = 0; i < holders.length; i++) {
+      try {
+        const { svg } = await mermaid.render(`diagram-${i}-${Date.now()}`, sources[i])
+        holders[i].innerHTML = svg
+      } catch (err) {
+        console.error('Diagram error', i, err)
+      }
+    }
+  }
+
+  btn.addEventListener('click', () => {
+    root.classList.toggle('dark')
+    localStorage.setItem('docs-theme', root.classList.contains('dark') ? 'dark' : 'light')
+    label()
+    draw()
+  })
+
+  try {
+    mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default
+    await draw()
+  } catch (err) {
+    console.warn('Could not load the diagram library (no internet?)', err)
+  }
+</script>
+</body>
+</html>
