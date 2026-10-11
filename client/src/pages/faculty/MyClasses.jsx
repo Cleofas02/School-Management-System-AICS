@@ -1,11 +1,15 @@
-import { useRef, useState } from 'react'
-import { Clock, GraduationCap, MapPin, Users } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Clock, GraduationCap, MapPin, Plus, Trash2, UserPlus, Users } from 'lucide-react'
 import Page from '../../components/Page'
+import { Modal } from '../../components/Modal'
+import { useConfirm } from '../../components/Feedback'
 import {
-  Avatar, Card, EmptyState, ErrorBox, Loading, ProgramChip, Progress, SearchBox, cx, programStyle, schedule,
+  Avatar, Btn, Card, EmptyState, ErrorBox, Field, Input, Loading, PROGRAMS, ProgramChip, Progress, SearchBox, Select, cx, programStyle, schedule,
 } from '../../components/ui'
 import { useFetch, useAction } from '../../hooks'
 import { api } from '../../api'
+
+const EMPTY_CLASS = { course_id: '', course_code: '', title: '', units: 3, program: PROGRAMS[0], days_of_week: '', room_number: '', start_time: '', end_time: '', max_capacity: 40 }
 
 const GRADE_OPTIONS = ['', '1.00', '1.25', '1.50', '1.75', '2.00', '2.25', '2.50', '2.75', '3.00', '5.00', 'INC']
 
@@ -26,6 +30,25 @@ export default function MyClasses() {
   const [search, setSearch] = useState('')
   const [local, setLocal] = useState({}) // grades shown instantly, before the server answers
   const rosterRef = useRef(null)
+  const confirm = useConfirm()
+
+  // New class pop-up
+  const courses = useFetch('/courses')
+  const classAction = useAction(sections.reload)
+  const [classOpen, setClassOpen] = useState(false)
+  const [classForm, setClassForm] = useState(EMPTY_CLASS)
+  const setC = (k) => (e) => setClassForm((f) => ({ ...f, [k]: e.target.value }))
+
+  // Add / remove students
+  const rosterAction = useAction(() => Promise.all([roster.reload(), sections.reload()]))
+  const [addOpen, setAddOpen] = useState(false)
+  const [studentQ, setStudentQ] = useState('')
+  const [debouncedQ, setDebouncedQ] = useState('')
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQ(studentQ.trim()), 250)
+    return () => clearTimeout(id)
+  }, [studentQ])
+  const available = useFetch(addOpen && selected ? `/teaching/sections/${selected.section_id}/available-students?q=${encodeURIComponent(debouncedQ)}` : null)
 
   const q = search.trim().toLowerCase()
   const list = (sections.data || []).filter((s) => !q || `${s.course_code} ${s.title} ${s.faculty_name || ''}`.toLowerCase().includes(q))
@@ -45,15 +68,49 @@ export default function MyClasses() {
     if (!ok) setLocal((l) => { const next = { ...l }; delete next[r.enrollment_id]; return next })
   }
 
+  async function createClass(e) {
+    e.preventDefault()
+    const f = classForm
+    const body = {
+      ...(f.course_id ? { course_id: f.course_id } : { course_code: f.course_code, title: f.title, units: f.units, program: f.program }),
+      days_of_week: f.days_of_week, room_number: f.room_number, start_time: f.start_time, end_time: f.end_time, max_capacity: f.max_capacity,
+    }
+    const ok = await classAction.run(() => api('/teaching/sections', { method: 'POST', body }), 'Class created')
+    if (ok) {
+      setClassOpen(false)
+      setClassForm(EMPTY_CLASS)
+      courses.reload()
+    }
+  }
+
+  async function addStudent(s) {
+    const ok = await rosterAction.run(
+      () => api(`/teaching/sections/${selected.section_id}/students`, { method: 'POST', body: { student_id: s.student_id } }),
+      `${s.first_name} added to ${selected.course_code}`
+    )
+    if (ok) available.reload()
+  }
+
+  async function removeStudent(r) {
+    const yes = await confirm({ title: 'Remove this student?', message: `${r.first_name} ${r.last_name} will be removed from ${selected.course_code}.`, confirmLabel: 'Remove', danger: true })
+    if (yes) rosterAction.run(() => api(`/teaching/enrollments/${r.enrollment_id}`, { method: 'DELETE' }), `${r.first_name} removed`)
+  }
+
+  const seatsLeft = selected ? selected.max_capacity - students.length : 0
+
   return (
-    <Page title="Classes & Grades" subtitle="Pick a class to see its students and enter grades.">
+    <Page
+      title="Classes & Grades"
+      subtitle="Open a class, manage its students and enter grades."
+      actions={<Btn icon={Plus} onClick={() => setClassOpen(true)}>New class</Btn>}
+    >
       <ErrorBox error={sections.error || roster.error} />
 
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="space-y-3 lg:col-span-2">
           <SearchBox value={search} onChange={setSearch} placeholder="Search classes..." />
           {!sections.data && !sections.error && <Loading rows={4} />}
-          {sections.data && list.length === 0 && <EmptyState icon={GraduationCap} title="No classes found" />}
+          {sections.data && list.length === 0 && <EmptyState icon={GraduationCap} title="No classes found" text="Press New class to open your first one." />}
           <div className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
             {list.map((s, i) => {
               const active = selected?.section_id === s.section_id
@@ -96,14 +153,18 @@ export default function MyClasses() {
                   <p className="text-xs font-bold text-muted">{selected.course_code}</p>
                   <h3 className="text-lg font-bold">{selected.title}</h3>
                 </div>
-                <div className="w-40 shrink-0">
-                  <div className="mb-1.5 flex justify-between text-xs"><span className="text-muted">Graded</span><b>{graded}/{students.length}</b></div>
-                  <Progress value={graded} max={students.length} color="bg-emerald-500" />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Btn size="sm" variant="soft" icon={UserPlus} onClick={() => { setStudentQ(''); setDebouncedQ(''); setAddOpen(true) }}>Add student</Btn>
+                  <div className="w-40 shrink-0">
+                    <div className="mb-1.5 flex justify-between text-xs"><span className="text-muted">Graded</span><b>{graded}/{students.length}</b></div>
+                    <Progress value={graded} max={students.length} color="bg-emerald-500" />
+                  </div>
                 </div>
               </div>
+              <p className="mb-2 text-xs text-muted">{students.length}/{selected.max_capacity} seats taken</p>
 
               {!roster.data && !roster.error && <Loading rows={3} />}
-              {roster.data && students.length === 0 && <EmptyState icon={Users} title="No approved students yet" />}
+              {roster.data && students.length === 0 && <EmptyState icon={Users} title="No students yet" text="Press Add student to put someone in this class." />}
 
               <div className="divide-y divide-line">
                 {students.map((r) => (
@@ -124,6 +185,14 @@ export default function MyClasses() {
                     >
                       {GRADE_OPTIONS.map((g) => <option key={g} value={g} className="bg-surface text-ink">{g || 'Grade'}</option>)}
                     </select>
+                    <button
+                      onClick={() => removeStudent(r)}
+                      aria-label={`Remove ${r.first_name} ${r.last_name}`}
+                      title="Remove from class"
+                      className="shrink-0 rounded-lg p-2 text-muted transition hover:bg-rose-500/10 hover:text-rose-500"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -131,6 +200,63 @@ export default function MyClasses() {
           )}
         </div>
       </div>
+
+      <Modal
+        open={classOpen}
+        onClose={() => setClassOpen(false)}
+        title="New class"
+        subtitle="It is assigned to you right away. Students you add are enrolled immediately."
+        footer={<><Btn variant="ghost" onClick={() => setClassOpen(false)}>Cancel</Btn><Btn type="submit" form="class-form" loading={classAction.busy}>Create class</Btn></>}
+      >
+        <form id="class-form" onSubmit={createClass} className="grid gap-4 sm:grid-cols-2">
+          <Field label="Course" className="sm:col-span-2">
+            <Select value={classForm.course_id} onChange={setC('course_id')}>
+              <option value="">+ Create a new course</option>
+              {(courses.data || []).map((c) => <option key={c.course_id} value={c.course_id}>{c.course_code} - {c.title}</option>)}
+            </Select>
+          </Field>
+          {!classForm.course_id && (
+            <>
+              <Field label="Course code"><Input required value={classForm.course_code} onChange={setC('course_code')} placeholder="CS401" /></Field>
+              <Field label="Units"><Input type="number" min="1" max="6" value={classForm.units} onChange={setC('units')} /></Field>
+              <Field label="Course title" className="sm:col-span-2"><Input required value={classForm.title} onChange={setC('title')} placeholder="Machine Learning" /></Field>
+              <Field label="Program" className="sm:col-span-2">
+                <Select value={classForm.program} onChange={setC('program')}>{PROGRAMS.map((p) => <option key={p}>{p}</option>)}</Select>
+              </Field>
+            </>
+          )}
+          <Field label="Days"><Input value={classForm.days_of_week} onChange={setC('days_of_week')} placeholder="Mon/Wed" /></Field>
+          <Field label="Room"><Input value={classForm.room_number} onChange={setC('room_number')} placeholder="Room 201" /></Field>
+          <Field label="Start time"><Input type="time" value={classForm.start_time} onChange={setC('start_time')} /></Field>
+          <Field label="End time"><Input type="time" value={classForm.end_time} onChange={setC('end_time')} /></Field>
+          <Field label="Seats"><Input type="number" min="1" max="200" value={classForm.max_capacity} onChange={setC('max_capacity')} /></Field>
+        </form>
+      </Modal>
+
+      <Modal
+        open={addOpen && !!selected}
+        onClose={() => setAddOpen(false)}
+        title="Add student"
+        subtitle={selected && `${selected.course_code} · ${seatsLeft} seat${seatsLeft === 1 ? '' : 's'} left`}
+        footer={<Btn onClick={() => setAddOpen(false)}>Done</Btn>}
+      >
+        <SearchBox value={studentQ} onChange={setStudentQ} placeholder="Search by name or student number..." />
+        <ErrorBox error={available.error} />
+        {!available.data && !available.error && <div className="mt-3"><Loading rows={2} /></div>}
+        {available.data && available.data.length === 0 && <EmptyState icon={Users} title="No students found" text="Everyone matching is already in this class." />}
+        <div className="mt-3 divide-y divide-line">
+          {(available.data || []).map((s) => (
+            <div key={s.student_id} className="flex items-center gap-3 py-2.5">
+              <Avatar name={`${s.first_name} ${s.last_name}`} size={36} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{s.last_name}, {s.first_name}</p>
+                <p className="text-xs text-muted">{s.student_number} · {s.program}</p>
+              </div>
+              <Btn size="sm" variant="soft" icon={Plus} loading={rosterAction.busy} disabled={seatsLeft <= 0} onClick={() => addStudent(s)}>Add</Btn>
+            </div>
+          ))}
+        </div>
+      </Modal>
     </Page>
   )
 }

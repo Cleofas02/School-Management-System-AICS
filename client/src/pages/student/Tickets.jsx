@@ -4,7 +4,7 @@ import Page from '../../components/Page'
 import { Modal } from '../../components/Modal'
 import { useToast } from '../../components/Feedback'
 import { Ring } from '../../components/charts'
-import { Btn, Card, EmptyState, ErrorBox, Loading, cx, fmtDate, peso } from '../../components/ui'
+import { Btn, Card, EmptyState, ErrorBox, Input, Loading, cx, fmtDate, peso } from '../../components/ui'
 import { useFetch, useAction } from '../../hooks'
 import { api } from '../../api'
 
@@ -62,7 +62,7 @@ function TicketCard({ t, index }) {
           <dt className="text-muted">Student</dt><dd className="font-medium">{t.first_name} {t.last_name}</dd>
           <dt className="text-muted">Office</dt><dd className="font-medium">{OFFICE[t.purpose]} · <span className="capitalize">{t.purpose}</span></dd>
           <dt className="text-muted">When</dt><dd className="font-medium">{fmtDate(t.appointment_date)} · {t.time_slot}</dd>
-          {t.purpose === 'accounting' && <><dt className="text-muted">Amount due</dt><dd className="font-medium">{peso(t.amount_due)}</dd></>}
+          {t.purpose === 'accounting' && <><dt className="text-muted">Amount to pay</dt><dd className="font-medium">{peso(t.amount_due)}</dd></>}
         </dl>
       </div>
       <div className="relative grid w-32 shrink-0 place-items-center border-l-2 border-dashed border-line p-3 sm:w-36">
@@ -85,17 +85,28 @@ export default function Tickets() {
   const [date, setDate] = useState(days[0].value)
   const [slot, setSlot] = useState(SLOTS[0])
   const [created, setCreated] = useState(null) // the new ticket, shown in a pop-up
+  const [amount, setAmount] = useState('') // how much the student will pay (empty = whole balance)
 
   const list = tickets.data || []
   const my = (ledger.data || [])[0]
   const balance = my ? my.total_amount - my.amount_paid : 0
 
+  const paying = purpose === 'accounting' && balance > 0
+
   async function book() {
+    const n = Number(amount)
+    if (paying && amount !== '' && (!(n > 0) || n > balance)) {
+      toast.error(`Enter an amount between ₱1 and your balance of ${peso(balance)}`)
+      return
+    }
     let result
     const ok = await run(async () => {
-      result = await api('/tickets', { method: 'POST', body: { purpose, appointment_date: date, time_slot: slot } })
+      result = await api('/tickets', { method: 'POST', body: { purpose, appointment_date: date, time_slot: slot, ...(paying && amount !== '' && { amount: n }) } })
     })
-    if (ok) setCreated(result)
+    if (ok) {
+      setCreated(result)
+      setAmount('')
+    }
   }
 
   async function copy() {
@@ -176,8 +187,24 @@ export default function Tickets() {
             ))}
           </div>
 
+          {paying && (
+            <>
+              <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-muted">4. How much will you pay?</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative w-44">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted">₱</span>
+                  <Input type="number" min="1" max={balance} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={balance.toFixed(2)} className="pl-7" />
+                </div>
+                <Btn size="sm" variant="soft" onClick={() => setAmount(String(balance))}>Full balance</Btn>
+                <Btn size="sm" variant="plain" onClick={() => setAmount(String(Math.round((balance / 2) * 100) / 100))}>Half</Btn>
+              </div>
+              <p className="mt-1.5 text-xs text-muted">Your balance is {peso(balance)}. Leave it empty to pay all of it, or enter any amount up to that.</p>
+            </>
+          )}
+          {purpose === 'accounting' && my && balance <= 0 && <p className="mt-4 text-sm text-muted">You have no balance to pay right now.</p>}
+
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-surface2 p-4">
-            <p className="text-sm"><b className="capitalize">{purpose}</b> · {fmtDate(date)} · {slot}</p>
+            <p className="text-sm"><b className="capitalize">{purpose}</b> · {fmtDate(date)} · {slot}{paying && ` · ${peso(amount === '' ? balance : Number(amount) || 0)}`}</p>
             <Btn icon={CalendarDays} loading={busy} onClick={book}>Get reference number</Btn>
           </div>
         </Card>

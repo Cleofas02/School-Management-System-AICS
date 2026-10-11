@@ -74,14 +74,27 @@ router.post('/', requireAccess('student'), handle(async (req, res) => {
   if (!DATE_FORMAT.test(appointment_date || '')) throw httpError(400, 'Please choose a date')
   if (!time_slot) throw httpError(400, 'Please choose a time slot')
 
-  // For accounting visits, the amount due is the student's remaining balance
+  // For accounting visits the student says how much they will pay (default: the whole balance).
+  // It can never be more than what they still owe.
   let amountDue = 0
   if (purpose === 'accounting') {
     const ledger = await pool.query(
       'SELECT total_amount::float8 AS total, amount_paid::float8 AS paid FROM tuition_ledgers WHERE student_id = $1',
       [req.user.id]
     )
-    if (ledger.rows[0]) amountDue = Math.max(ledger.rows[0].total - ledger.rows[0].paid, 0)
+    if (ledger.rows[0]) {
+      const balance = Math.max(ledger.rows[0].total - ledger.rows[0].paid, 0)
+      const asked = req.body.amount
+      if (asked === undefined || asked === null || asked === '') {
+        amountDue = balance
+      } else {
+        const amount = Math.round(Number(asked) * 100) / 100
+        if (!(amount > 0) || amount > balance + 0.001) {
+          throw httpError(400, `Amount must be more than 0 and not more than your balance (${balance.toFixed(2)})`)
+        }
+        amountDue = amount
+      }
+    }
   }
 
   for (let attempt = 0; attempt < 5; attempt++) {
