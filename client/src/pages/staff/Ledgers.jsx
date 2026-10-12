@@ -17,6 +17,8 @@ export default function Ledgers() {
   const [program, setProgram] = useState('all')
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState(null) // the ledger being edited
+  const [paying, setPaying] = useState(null) // the ledger receiving a payment
+  const [payAmount, setPayAmount] = useState('')
   const [form, setForm] = useState({ total_amount: '', amount_paid: '' })
 
   const all = data || []
@@ -41,6 +43,12 @@ export default function Ledgers() {
     e.preventDefault()
     const ok = await run(() => api(`/ledgers/${editing.ledger_id}`, { method: 'PATCH', body: form }), 'Tuition updated')
     if (ok) setEditing(null)
+  }
+
+  async function pay(e) {
+    e.preventDefault()
+    const ok = await run(() => api(`/ledgers/${paying.ledger_id}/payments`, { method: 'POST', body: { amount: payAmount } }), 'Payment recorded')
+    if (ok) { setPaying(null); setPayAmount('') }
   }
 
   return (
@@ -96,6 +104,7 @@ export default function Ledgers() {
                 <Progress value={l.amount_paid} max={l.total_amount} color={l.payment_status === 'paid' ? 'bg-emerald-500' : 'bg-brand-500'} />
               </div>
               <Badge value={l.payment_status} />
+              <Btn size="sm" variant="soft" icon={Banknote} onClick={() => { setPaying(l); setPayAmount('') }}>Add payment</Btn>
               <Btn size="sm" variant="ghost" icon={Pencil} onClick={() => startEdit(l)}>Edit</Btn>
             </Card>
           )
@@ -116,6 +125,18 @@ export default function Ledgers() {
             <Btn size="sm" variant="soft" onClick={() => setForm({ ...form, amount_paid: form.total_amount })}>Mark fully paid</Btn>
             <Btn size="sm" variant="plain" onClick={() => setForm({ ...form, amount_paid: '0' })}>Reset to 0</Btn>
           </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={!!paying}
+        onClose={() => setPaying(null)}
+        title="Add payment"
+        subtitle={paying && `${paying.first_name} ${paying.last_name} · balance ${peso(paying.total_amount - paying.amount_paid)}`}
+        footer={<><Btn variant="ghost" onClick={() => setPaying(null)}>Cancel</Btn><Btn type="submit" form="pay-form" loading={busy}>Record payment</Btn></>}
+      >
+        <form id="pay-form" onSubmit={pay}>
+          <Field label="Payment amount (₱)"><Input type="number" min="0.01" step="0.01" required value={payAmount} onChange={(e) => setPayAmount(e.target.value)} /></Field>
         </form>
       </Modal>
     </Page>

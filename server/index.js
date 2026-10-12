@@ -18,6 +18,14 @@ const origins = (process.env.CLIENT_URL || '').split(',').map((s) => s.trim().re
 app.use(cors(origins.length ? { origin: origins } : undefined))
 app.use(express.json())
 
+// Request logger: prints every request and its result (visible in the Render Logs tab / terminal)
+app.use((req, res, next) => {
+  const start = Date.now()
+  console.log(`--> ${req.method} ${req.url}`)
+  res.on('finish', () => console.log(`<-- ${req.method} ${req.url} ${res.statusCode} (${Date.now() - start}ms)`))
+  next()
+})
+
 // Health check
 app.get('/api/health', async (req, res) => {
   try {
