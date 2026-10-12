@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './AuthContext.jsx'
 import { FeedbackProvider } from './components/Feedback.jsx'
+import { Analytics } from '@vercel/analytics/react'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -12,6 +13,7 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <FeedbackProvider>
           <App />
+          <Analytics />
         </FeedbackProvider>
       </AuthProvider>
     </BrowserRouter>
