@@ -9,8 +9,7 @@ One web system for **Registrar**, **Accounting** and **Teaching**: enrollment, g
 
 ## Demo
 
-<!-- Drag campus-sms-brag.mp4 into this README in GitHub's editor and the video link appears here -->
-
+▶️ [Watch the demo video](docs/campus-sms-brag.mp4)
 ## Features
 
 - **Registrar:** approve student accounts, manage courses and sections, approve or deny enrollments (seat limits enforced)
