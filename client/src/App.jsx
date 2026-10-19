@@ -14,7 +14,6 @@ import Tickets from './pages/student/Tickets'
 import ManageTickets from './pages/staff/ManageTickets'
 import Ledgers from './pages/staff/Ledgers'
 
-// Must be logged in. Shows the sidebar + top bar around the page.
 function RequireAuth() {
   const { user, loading } = useAuth()
   if (loading) return <div className="grid min-h-screen place-items-center text-muted">Loading...</div>
@@ -22,7 +21,6 @@ function RequireAuth() {
   return <Shell />
 }
 
-// Limits a page to certain roles: admin, registrar, accounting, faculty, student
 function OnlyFor({ roles }) {
   const { user } = useAuth()
   return roles.includes(roleKey(user)) ? <Outlet /> : <Navigate to="/" replace />
