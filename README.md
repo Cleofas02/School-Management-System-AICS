@@ -1,9 +1,27 @@
 # Campus SMS — AICS Commonwealth
 
+
+
 School Management System for the Asian Institute of Computer Studies, Commonwealth Branch.
 React + Tailwind (client) · Express (server) · PostgreSQL (database).
 
 Roles: Admin, Registrar, Accounting, Faculty, Student.
+
+
+<video src="https://github.com/user-attachments/assets/67c862e1-25bd-4149-a18f-78c6f84276c6" controls width="100%"></video>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Run locally
 ```bash
