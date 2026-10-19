@@ -37,7 +37,11 @@ Browser (React on Vercel) --HTTPS, JSON + JWT--> Express API (Render) --SQL over
 Every request carries a login token. The server checks the token and the user's role before touching the database.
 
 
-<video src="https://github.com/user-attachments/assets/67c862e1-25bd-4149-a18f-78c6f84276c6" controls width="100%"></video>
+<video src="https://github.com/user-attachments/assets/f24c1f5c-9213-4eb7-ae92-59726d9dbd17
+" controls width="100%"></video>
+
+
+
 
 
 
